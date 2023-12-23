@@ -12,18 +12,28 @@ class Image:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    def resize(self, width=None, height=None):
+    def resize(self, width=None, height=None, dimensions = "Original size"):
         if width is not None and height is not None:
             self.image = cv2.resize(self.image, (width, height))
+            dimensions = f"Width: {width}, Height: {height}"
         elif width is not None:
             ratio = width / self.image.shape[1]
             self.image = cv2.resize(self.image, (width, int(self.image.shape[0] * ratio)))
+            dimensions = f"Width: {width}"
         elif height is not None:
             ratio = height / self.image.shape[0]
             self.image = cv2.resize(self.image, (int(self.image.shape[1] * ratio), height))
+            dimensions = f"Height: {height}"
+        # Add text
+        cv2.putText(self.image, dimensions, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     def to_binary(self, threshold):
+        # Convert the image to grayscale
+        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        # Apply binary threshold
         _, self.image = cv2.threshold(self.image, threshold, 255, cv2.THRESH_BINARY)
+        # Add text
+        cv2.putText(self.image, f"Binary threshold: {threshold}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     def invert(self):
         self.image = cv2.bitwise_not(self.image)
