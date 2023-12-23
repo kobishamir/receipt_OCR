@@ -1,6 +1,6 @@
-
 import cv2
 import argparse
+
 
 class Image:
     def __init__(self, path):
@@ -27,7 +27,6 @@ class Image:
 
     def invert(self):
         self.image = cv2.bitwise_not(self.image)
-        
 
 
 def uploader(image_path):
@@ -40,11 +39,12 @@ def uploader(image_path):
 
     return image
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Image Processing Script")
 
     image_path = 'C:\\Users\\kobis\\OneDrive\\Pictures\\20230813_202253.jpg'
-    
+
     parser.add_argument("-i", "--image", type=str, default=image_path, help="Path to the image file")
     parser.add_argument("-t", "--threshold", type=int, default=130, help="Threshold value for binary conversion")
 
@@ -57,6 +57,7 @@ def parse_arguments():
     }
 
     return arguments
+
 
 if __name__ == "__main__":
     # Parse command-line arguments
