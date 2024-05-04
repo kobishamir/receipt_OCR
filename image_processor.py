@@ -1,4 +1,6 @@
 import cv2
+import numpy as np
+from PIL import Image as PILImage
 
 
 class Image:
@@ -18,19 +20,44 @@ class Image:
             ratio = height / self.image.shape[0]
             self.image = cv2.resize(self.image, (int(self.image.shape[1] * ratio), height))
 
-    def to_binary(self, threshold):
-        """Convert the image to binary using the specified threshold."""
-        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        _, self.image = cv2.threshold(self.image, threshold, 255, cv2.THRESH_BINARY)
+    def to_binary(self, threshold=128):
+        """Convert the image to binary using Otsu's thresholding after Gaussian filtering."""
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        _, self.image = cv2.threshold(blur, threshold, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    def denoise(self):
+        """Apply fast Nl means denoising."""
+        self.image = cv2.fastNlMeansDenoisingColored(self.image, None, 10, 10, 7, 21)
 
     def invert(self):
         """Invert the colors of the image."""
         self.image = cv2.bitwise_not(self.image)
 
+    def deskew(self):
+        """Correct alignment of the image."""
+        coords = np.column_stack(np.where(self.image > 0))
+        angle = cv2.minAreaRect(coords)[-1]
+        if angle < -45:
+            angle = -(90 + angle)
+        else:
+            angle = -angle
+        (h, w) = self.image.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        self.image = cv2.warpAffine(self.image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+    def convert_to_pil(self):
+        """Convert OpenCV image to a PIL image."""
+        return PILImage.fromarray(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
 
 
-# Commenting out function calls to comply with the instruction of development phase
-# img = Image("path_to_image.jpg")
-# img.resize(width=500)
-# img.to_binary(threshold=130)
-# show_image(img.image, dimensions="Width: 500", threshold=130)
+# Example usage
+if __name__ == "__main__":
+    img = Image("C:\\Users\\kobis\\OneDrive\\Pictures\\20230813_202253.jpg")
+    img.resize(width=500)
+    img.denoise()
+    img.to_binary()
+    img.deskew()
+    pil_image = img.convert_to_pil()
+    pil_image.show()
