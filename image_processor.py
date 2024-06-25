@@ -1,4 +1,5 @@
 import cv2
+import consts
 import numpy as np
 from PIL import Image as PILImage
 
@@ -66,11 +67,16 @@ class Image:
         self.image = self.image[y:y + h, x:x + w]
 
 
-# Example usage
-if __name__ == "__main__":
-    img = Image("C:\\Users\\kobis\\OneDrive\\Pictures\\20230813_202253.jpg")
+def processor(path) -> PILImage:
+
+    img = Image(path)
     img.denoise()
     img.to_binary()
     img.crop_to_receipt()
     pil_image = img.convert_to_pil()
-    pil_image.show()
+    return img.image, pil_image
+
+
+# Example usage
+if __name__ == "__main__":
+    processor(consts.ExampleImage)

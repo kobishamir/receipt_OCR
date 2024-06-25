@@ -1,61 +1,47 @@
 import pytesseract
 import consts
-from PIL import Image, ImageOps, ImageEnhance, ImageDraw, ImageFilter
 import matplotlib.pyplot as plt
+import cv2
 
 
-def perform_ocr_and_display(image_path, language='heb'):
+def perform_ocr_and_display(image_cv, image_pil, language='heb'):
     try:
-        # Open image and copy for preprocessing display
-        img = Image.open(image_path)
-        img = img.rotate(270, expand=True)  # Rotate 90 degrees clockwise (270 degrees in PIL)
-        preprocessed_img = img.copy()
+        # Perform OCR on the PIL image
+        text = pytesseract.image_to_string(image_pil, lang=language)
 
-        # Preprocessing
-        preprocessed_img = preprocessed_img.convert('L')  # Convert to grayscale
-        preprocessed_img = ImageOps.autocontrast(preprocessed_img)  # Automatically adjust image contrast
-        preprocessed_img = preprocessed_img.resize([2 * s for s in preprocessed_img.size],
-                                                   Image.LANCZOS)  # Scale up the image
-        preprocessed_img = preprocessed_img.filter(
-            ImageFilter.MedianFilter())  # Apply a median filter for noise reduction
-
-        # Perform OCR
-        text = pytesseract.image_to_string(preprocessed_img, lang=language)
-
-        # Display the preprocessed image
-        plt.figure(figsize=(12, 8))
-        plt.subplot(1, 2, 1)
-        plt.imshow(preprocessed_img, cmap='gray')
-        plt.title('Pre-processed Image')
-        plt.axis('off')
-
-        # Draw rectangles and display the annotated image
-        draw = ImageDraw.Draw(img)
-        boxes = pytesseract.image_to_boxes(preprocessed_img, lang=language)
+        # Draw rectangles on the OpenCV image
+        boxes = pytesseract.image_to_boxes(image_pil, lang=language)
         for box in boxes.splitlines():
             b = box.split()
             x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
-            y = preprocessed_img.height - y
-            h = preprocessed_img.height - h
-            draw.rectangle(((x, h), (w, y)), outline="red")
+            y = image_cv.shape[0] - y
+            h = image_cv.shape[0] - h
+            cv2.rectangle(image_cv, (x, h), (w, y), (0, 0, 255), 1)
 
-        # Print OCR results
-        print("OCR Results:")
-        print(text)
+        # Display the original and annotated images side by side
+        plt.figure(figsize=(12, 6))
 
-        plt.subplot(1, 2, 2)
-        plt.imshow(img, cmap='gray')
+        plt.subplot(1, 2, 1)
+        plt.imshow(cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB))
         plt.title('Annotated Image')
         plt.axis('off')
+
+        plt.subplot(1, 2, 2)
+        plt.imshow(image_pil, cmap='gray')
+        plt.title('Processed Image')
+        plt.axis('off')
+
         plt.show()
-        return text  # Optionally return text if you want to use it elsewhere
+
+        return text
 
     except Exception as e:
-        print(f"Error occurred while processing {image_path}: {e}")
+        print(f"Error occurred while processing: {e}")
         return ""
 
 
 if __name__ == "__main__":
-    # Example path, can be adjusted to be dynamic as needed
-    image_path = consts.ExampleImage
-    perform_ocr_and_display(image_path)
+    from image_processor import processor
+
+    _, cv2_image, pil_image = processor(consts.ExampleImage)
+    perform_ocr_and_display(cv2_image, pil_image)

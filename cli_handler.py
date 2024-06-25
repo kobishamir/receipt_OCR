@@ -1,8 +1,8 @@
 import argparse
 import consts
-from image_processor import Image
-from display_utils import show_image
-from ocr_processor import perform_ocr_and_display  # Assuming your OCR function is updated and named correctly
+from image_processor import processor
+from ocr_processor import perform_ocr_and_display
+
 
 def parse_arguments():
     """Parse command-line arguments."""
@@ -16,26 +16,21 @@ def parse_arguments():
     parser.add_argument("-g", "--google_sheet", action='store_true', help="Update Google Sheet with OCR results.")
     return parser.parse_args()
 
+
 def main():
+
     args = parse_arguments()
 
     # Load and process the image
-    image = Image(args.image)
-    if args.width:
-        image.resize(width=args.width)
-    if args.threshold:
-        image.to_binary(threshold=args.threshold)
+    processed_image_pil_cv2, processed_image_pil = processor(args.image)
 
-    # Optionally display the image
     if args.display:
-        show_image(image.image)
+        processed_image_pil.show()
 
-    # Perform OCR if requested
     if args.ocr:
-        ocr_results = perform_ocr_and_display(args.image)  # Assuming you will update this function to just return results if needed
+        ocr_results = perform_ocr_and_display(processed_image_pil_cv2, processed_image_pil)
         print("OCR Results:", ocr_results)
-        # if args.google_sheet:
-        #     update_sheet(ocr_results)
+
 
 if __name__ == "__main__":
     main()
